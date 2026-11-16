@@ -1,0 +1,125 @@
+Elaborato per 11s
+
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pricing Simulator</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#687386;--line:#e2e7ef;--accent:#e06b35;--green:#16835b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px Arial;color:var(--ink)}
+header{background:#172033;color:white;padding:24px 5%;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:25px}header span{color:#b9c2d0}
+main{max-width:1250px;margin:25px auto;padding:0 20px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:16px;margin:0 0 16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+label{display:block;color:var(--muted);font-size:12px;margin:10px 0 5px}
+input,select{width:100%;padding:10px;border:1px solid #ccd4df;border-radius:7px;font-size:14px;background:white}
+input:focus,select:focus{outline:2px solid #f5c4ae;border-color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.results{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.metric{background:white;border:1px solid var(--line);border-radius:12px;padding:15px}
+.metric small{display:block;color:var(--muted);margin-bottom:7px}.metric strong{font-size:20px}
+.metric.highlight{border-color:var(--accent);background:#fff8f4}.metric.highlight strong{color:var(--accent)}
+table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}
+th{color:var(--muted);font-size:12px;font-weight:normal}.positive{color:var(--green)}.negative{color:#c74242}
+button{border:0;border-radius:8px;padding:11px 16px;background:var(--accent);color:white;font-weight:bold;cursor:pointer}
+button.secondary{background:#e9edf3;color:var(--ink);margin-left:8px}
+@media(max-width:900px){.grid,.results{grid-template-columns:1fr 1fr}}@media(max-width:600px){.grid,.results{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div><h1>Pricing Simulator</h1><span>Cliente · Prodotto · Marginalità</span></div><button onclick="resetAll()">Reset</button></header>
+<main>
+<section class="card">
+<h2>Anagrafica e quantità</h2>
+<div class="grid">
+<div><label>Cliente</label><input id="customer" value="Cliente demo"></div>
+<div><label>Prodotto</label><input id="product" value="Prodotto demo"></div>
+<div><label>Quantità</label><input id="qty" type="number" value="10000" min="0"></div>
+<div><label>Unità quantità</label><select id="qtyUnit"><option>CU</option><option>Pezzi singoli</option><option>Case / TRU</option><option>Pallet</option><option>Gross tons</option><option>Commercial tons</option></select></div>
+<div><label>CU per case</label><input id="cuCase" type="number" value="12" min="0"></div>
+<div><label>Case per pallet</label><input id="casePallet" type="number" value="60" min="0"></div>
+<div><label>Gross tons per CU</label><input id="gtCu" type="number" value="0.0054" step="0.0001"></div>
+<div><label>Commercial tons per CU</label><input id="ctCu" type="number" value="0.0048" step="0.0001"></div>
+</div>
+</section>
+
+<div class="grid">
+<section class="card"><h2>Prezzo e sconti in fattura</h2>
+<label>Prezzo lordo €/CU</label><input id="grossPrice" type="number" value="1.00" step="0.0001">
+<div id="discounts"></div>
+</section>
+
+<section class="card"><h2>Sconti fuori fattura</h2>
+<label>GDO variabile %</label><input id="gdoVar" type="number" value="0" step="0.01">
+<div class="row"><div><label>GDO fissa €</label><input id="gdoFixed" type="number" value="0" step="0.01"></div><div><label>GDO fissa adv €</label><input id="gdoAdv" type="number" value="0" step="0.01"></div></div>
+<div class="row"><div><label>Scan data €</label><input id="scan" type="number" value="0" step="0.01"></div><div><label>Listings €</label><input id="listings" type="number" value="0" step="0.01"></div></div>
+</section>
+
+<section class="card"><h2>Costi industriali</h2>
+<div id="industrialCosts"></div>
+</section>
+</div>
+
+<section class="card"><h2>Costi distributivi</h2>
+<div class="grid">
+<div><label>Trasporto €/gross ton</label><input id="transport" type="number" value="0" step="0.01"></div>
+<div><label>Warehousing</label><input id="warehouse" type="number" value="0" step="0.01"></div>
+<div><label>Warehousing filiali</label><input id="branchWarehouse" type="number" value="0" step="0.01"></div>
+<div><label>Costi logistici</label><input id="logistics" type="number" value="0" step="0.01"></div>
+<div><label>Logistic staff</label><input id="staff" type="number" value="0" step="0.01"></div>
+</div>
+</section>
+
+<section class="results">
+<div class="metric"><small>Fatturato netto</small><strong id="netRevenue">€0</strong></div>
+<div class="metric"><small>Fatturato nettissimo</small><strong id="netNetRevenue">€0</strong></div>
+<div class="metric"><small>Industrial Margin %</small><strong id="industrialMarginPct">0%</strong></div>
+<div class="metric highlight"><small>Gross Margin €</small><strong id="grossMargin">€0</strong></div>
+<div class="metric highlight"><small>Gross Margin %</small><strong id="grossMarginPct">0%</strong></div>
+</section>
+
+<section class="card">
+<h2>Riepilogo economico</h2>
+<table><thead><tr><th>Voce</th><th>Totale €</th><th>€/CU</th><th>% sul fatturato netto</th></tr></thead>
+<tbody id="summary"></tbody></table>
+</section>
+</main>
+
+<script>
+const money=x=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(x||0);
+const num=id=>parseFloat(document.getElementById(id).value)||0;
+const ids=['customer','product','qty','qtyUnit','cuCase','casePallet','gtCu','ctCu','grossPrice','gdoVar','gdoFixed','gdoAdv','scan','listings','transport','warehouse','branchWarehouse','logistics','staff'];
+function makeInputs(){
+ let d=document.getElementById('discounts'),c=document.getElementById('industrialCosts');
+ for(let i=1;i<=10;i++)d.innerHTML+=`<label>Sconto ${i} %</label><input id="d${i}" type="number" value="0" step="0.01">`;
+ ['COGS','Costo MTO','Environmental contribution'].forEach((x,i)=>c.innerHTML+=`<label>${x}</label><div class="row"><input id="ic${i}" type="number" value="0" step="0.0001"><select id="iu${i}"><option>€/CU</option><option>€/case</option><option>€/gross ton</option><option>Totale €</option></select></div>`);
+}
+function calculate(){
+ let q=num('qty'), unit=document.getElementById('qtyUnit').value, cu=q;
+ if(unit==='Pezzi singoli')cu=q;
+ if(unit==='Case / TRU')cu=q*num('cuCase');
+ if(unit==='Pallet')cu=q*num('cuCase')*num('casePallet');
+ if(unit==='Gross tons')cu=num('gtCu')?q/num('gtCu'):0;
+ if(unit==='Commercial tons')cu=num('ctCu')?q/num('ctCu'):0;
+ let price=num('grossPrice'), after=price;
+ for(let i=1;i<=10;i++)after*=1-num('d'+i)/100;
+ let net=after*cu, variable=net*num('gdoVar')/100;
+ let out=variable+num('gdoFixed')+num('gdoAdv')+num('scan')+num('listings'), netnet=net-out;
+ let industrial=0;
+ for(let i=0;i<3;i++){let v=num('ic'+i),u=document.getElementById('iu'+i).value; if(u==='€/CU')industrial+=v*cu; else if(u==='€/case')industrial+=v*(cu/(num('cuCase')||1)); else if(u==='€/gross ton')industrial+=v*(cu*num('gtCu')); else industrial+=v;}
+ let im=netnet-industrial, dist=num('transport')*cu*num('gtCu')+num('warehouse')+num('branchWarehouse')+num('logistics')+num('staff'), gm=im-dist;
+ document.getElementById('netRevenue').textContent=money(net);document.getElementById('netNetRevenue').textContent=money(netnet);
+ document.getElementById('industrialMarginPct').textContent=(netnet?im/netnet*100:0).toFixed(1)+'%';
+ document.getElementById('grossMargin').textContent=money(gm);document.getElementById('grossMarginPct').textContent=(netnet?gm/netnet*100:0).toFixed(1)+'%';
+ let rows=[['Fatturato netto',net],['Sconti fuori fattura',-out],['Fatturato nettissimo',netnet],['Costi industriali',-industrial],['Industrial Margin',im],['Costi distributivi',-dist],['Gross Margin',gm]];
+ document.getElementById('summary').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${money(r[1])}</td><td>${money(cu?r[1]/cu:0)}</td><td>${net?(r[1]/net*100).toFixed(1):0}%</td></tr>`).join('');
+}
+function resetAll(){location.reload()}
+makeInputs();document.addEventListener('input',calculate);document.addEventListener('change',calculate);calculate();
+</script>
+</body>
+</html>
